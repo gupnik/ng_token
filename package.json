@@ -1,0 +1,26 @@
+{
+  "name": "ng_token",
+  "version": "1.0.0",
+  "description": "NGT ERC20",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "truffle-hdwallet-provider": "^1.0.17"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gupnik/ng_token.git"
+  },
+  "author": "Nikhil Gupta",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gupnik/ng_token/issues"
+  },
+  "homepage": "https://github.com/gupnik/ng_token#readme"
+}
