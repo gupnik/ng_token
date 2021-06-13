@@ -68,4 +68,50 @@ contract("NGToken", function (accounts) {
     allowance = await tokenInstance.allowance(accounts[0], accounts[1]);
     assert.equal(allowance.toNumber(), 100);
   });
+
+  it("handles delegated token transfers", async function() {
+    tokenInstance = await NGToken.deployed();
+    fromAccount = accounts[2];
+    toAccount = accounts[3];
+    spendingAccount = accounts[4];
+
+    //Setup
+    await tokenInstance.transfer(fromAccount, 100, { from: accounts[0] });
+
+    receipt = await tokenInstance.approve(spendingAccount, 10, { from: fromAccount });
+    let thrown  = false; 
+    try {
+      await tokenInstance.transferFrom(fromAccount, toAccount, 999999, { from: spendingAccount });
+    } catch (error) {
+      thrown = true;
+      assert(error.message.indexOf("revert") >= 0, "cannot transfer value larger than balance amount");
+    }
+    assert.equal(thrown, true, "cannot transfer value larger than balance amount");
+
+    thrown  = false; 
+    try {
+      await tokenInstance.transferFrom(fromAccount, toAccount, 20, { from: spendingAccount });
+    } catch (error) {
+      thrown = true;
+      assert(error.message.indexOf("revert") >= 0, "cannot transfer value larger than approved amount");
+    }
+    assert.equal(thrown, true, "cannot transfer value larger than approved amount");
+
+    result = await tokenInstance.transferFrom.call(fromAccount, toAccount, 10, { from: spendingAccount });
+    assert.equal(result, true);
+
+    receipt = await tokenInstance.transferFrom(fromAccount, toAccount, 10, { from: spendingAccount });
+    assert.equal(receipt.logs.length, 1);
+    assert.equal(receipt.logs[0].event, "Transfer");
+    assert.equal(receipt.logs[0].args._from, fromAccount);
+    assert.equal(receipt.logs[0].args._to, toAccount);
+    assert.equal(receipt.logs[0].args._value, 10);
+
+    receiverBalance = await tokenInstance.balanceOf(toAccount);
+    assert.equal(receiverBalance.toNumber(), 10, 'adds the amount to receiver');
+    senderBalance = await tokenInstance.balanceOf(fromAccount);
+    assert.equal(senderBalance.toNumber(), 90, 'deducts the amount from sender');
+    allowance = await tokenInstance.allowance(fromAccount, spendingAccount);
+    assert.equal(allowance.toNumber(), 0, 'deducts the amount from the allowance');
+  });
 });
