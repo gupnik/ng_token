@@ -29,5 +29,29 @@ contract("NGToken", function (accounts) {
     tokenInstance = await NGToken.deployed();
     balance = await tokenInstance.balanceOf(accounts[0]);
     assert(balance.toNumber(), 100000);
-  })
+  });
+
+  it("transfers token ownership", async function() {
+    tokenInstance = await NGToken.deployed();
+    let thrown  = false;
+    try {
+      await tokenInstance.transfer.call(accounts[1], 99999999999);
+    } catch (error) {
+      thrown = true;
+      assert(error.message.indexOf("revert") >= 0);
+    } 
+    assert(thrown, true);
+    result = await tokenInstance.transfer.call(accounts[1], 250000, { from: accounts[0] });
+    assert(result, true);
+    receipt = await tokenInstance.transfer(accounts[1], 250000, { from: accounts[0] });
+    assert(receipt.logs.length, 1);
+    assert(receipt.logs[0].event, "Transfer");
+    assert(receipt.logs[0].args._from, accounts[0]);
+    assert(receipt.logs[0].args._to, accounts[1]);
+    assert(receipt.logs[0].args._value, 250000);
+    receiverBalance = await tokenInstance.balanceOf(accounts[1]);
+    assert(receiverBalance.toNumber(), 250000, 'adds the amount to receiver');
+    senderBalance = await tokenInstance.balanceOf(accounts[0]);
+    assert(senderBalance.toNumber(), 750000, 'deducts the amount from sender');
+  });
 });
